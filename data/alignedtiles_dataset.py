@@ -50,12 +50,12 @@ class AlignedTilesDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         # get the image paths of your dataset;
         if opt.phase == 'train':
-            opt.phase = 'training'
+            self.phase = 'training'
         else:
-            opt.phase = 'validation'
+            self.phase = 'validation'
 
-        self.dir_A = os.path.join(opt.dataroot, 'A', opt.phase, 'images')
-        self.dir_B = os.path.join(opt.dataroot, 'B', opt.phase, 'images')
+        self.dir_A = os.path.join(opt.dataroot, 'A', self.phase, 'images')
+        self.dir_B = os.path.join(opt.dataroot, 'B', self.phase, 'images')
 
         self.A_tiles = [(tile, path)
                         for tile, path in tiles_from_slippy_map(self.dir_A)]
@@ -64,18 +64,18 @@ class AlignedTilesDataset(BaseDataset):
                         for tile, path in tiles_from_slippy_map(self.dir_B)]
         self.tile_set &= {tile[0] for tile in self.B_tiles}
         # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
-        # self.A_tiles = sorted(list(filter(lambda tile: tile[0] in self.tile_set,
-                                          # self.A_tiles)),
-                              # key=lambda tile: tile[0])
-        # self.B_tiles = sorted(list(filter(lambda tile: tile[0] in self.tile_set,
-                                          # self.B_tiles)),
-                              # key=lambda tile: tile[0])
-        for tile, path in self.A_tiles:
-            if tile not in self.tile_set:
-                self.B_tiles.append((tile, self.B_tiles[0][1]))
-        self.A_tiles.sort(key=lambda tile: tile[0])
-        self.B_tiles.sort(key=lambda tile: tile[0])
-        self.tile_set = list(self.tile_set)
+        self.A_tiles = sorted(list(filter(lambda tile: tile[0] in self.tile_set,
+                                          self.A_tiles)),
+                              key=lambda tile: tile[0])
+        self.B_tiles = sorted(list(filter(lambda tile: tile[0] in self.tile_set,
+                                          self.B_tiles)),
+                              key=lambda tile: tile[0])
+        # for tile, path in self.A_tiles:
+            # if tile not in self.tile_set:
+                # self.B_tiles.append((tile, self.B_tiles[0][1]))
+        # self.A_tiles.sort(key=lambda tile: tile[0])
+        # self.B_tiles.sort(key=lambda tile: tile[0])
+        # self.tile_set = list(self.tile_set)
 
         self.transform = get_transform(opt)
 
@@ -106,5 +106,5 @@ class AlignedTilesDataset(BaseDataset):
 
     def __len__(self):
         """Return the total number of images."""
-        # return len(self.tile_set)
-        return len(self.A_tiles)
+        return len(self.tile_set)
+        # return len(self.A_tiles)
