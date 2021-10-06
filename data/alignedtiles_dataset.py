@@ -33,6 +33,7 @@ class AlignedTilesDataset(BaseDataset):
         """
         # parser.add_argument('--new_dataset_option', type=float, default=1.0, help='new dataset option')
         # parser.set_defaults(max_dataset_size=10, new_dataset_option=2.0)  # specify dataset-specific default values
+        parser.add_argument('--generate_images', action='store_true', help='new dataset option')
         return parser
 
     def __init__(self, opt):
@@ -50,32 +51,48 @@ class AlignedTilesDataset(BaseDataset):
         BaseDataset.__init__(self, opt)
         # get the image paths of your dataset;
         if opt.phase == 'train':
-            self.phase = 'training'
+            opt.phase = 'training'
         else:
-            self.phase = 'validation'
+            opt.phase = 'validation'
 
-        self.dir_A = os.path.join(opt.dataroot, 'A', self.phase, 'images')
-        self.dir_B = os.path.join(opt.dataroot, 'B', self.phase, 'images')
+        self.dir_A = os.path.join(opt.dataroot, 'A', opt.phase, 'images')
+        self.dir_B = os.path.join(opt.dataroot, 'B', opt.phase, 'images')
+        self.gen_img = opt.generate_images
 
         self.A_tiles = [(tile, path)
                         for tile, path in tiles_from_slippy_map(self.dir_A)]
-        self.tile_set = {tile[0] for tile in self.A_tiles}
         self.B_tiles = [(tile, path)
                         for tile, path in tiles_from_slippy_map(self.dir_B)]
-        self.tile_set &= {tile[0] for tile in self.B_tiles}
         # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
-        self.A_tiles = sorted(list(filter(lambda tile: tile[0] in self.tile_set,
-                                          self.A_tiles)),
-                              key=lambda tile: tile[0])
-        self.B_tiles = sorted(list(filter(lambda tile: tile[0] in self.tile_set,
-                                          self.B_tiles)),
-                              key=lambda tile: tile[0])
-        # for tile, path in self.A_tiles:
-            # if tile not in self.tile_set:
-                # self.B_tiles.append((tile, self.B_tiles[0][1]))
-        # self.A_tiles.sort(key=lambda tile: tile[0])
-        # self.B_tiles.sort(key=lambda tile: tile[0])
-        # self.tile_set = list(self.tile_set)
+        if not self.gen_img:
+            self.tile_set = {tile[0] for tile in self.A_tiles}
+            self.tile_set &= {tile[0] for tile in self.B_tiles}
+            self.A_tiles = sorted(list(filter(lambda tile: tile[0] in self.tile_set,
+                                              self.A_tiles)),
+                                  key=lambda tile: tile[0])
+            self.B_tiles = sorted(list(filter(lambda tile: tile[0] in self.tile_set,
+                                              self.B_tiles)),
+                                  key=lambda tile: tile[0])
+        else:
+            self.a_set = {tile[0] for tile in self.A_tiles}
+            self.b_set = {tile[0] for tile in self.B_tiles}
+
+            if opt.direction == 'AtoB':
+                for tile, path in self.A_tiles:
+                    if tile not in self.b_set:
+                        self.B_tiles.append((tile, self.B_tiles[0][1]))
+                self.B_tiles = list(filter(lambda tile: tile[0] in self.a_set, self.B_tiles))
+                self.tile_set = self.a_set
+            else:
+                for tile, path in self.B_tiles:
+                    if tile not in self.a_set:
+                        self.A_tiles.append((tile, self.A_tiles[0][1]))
+                self.A_tiles = list(filter(lambda tile: tile[0] in self.b_set, self.A_tiles))
+                self.tile_set = self.b_set
+
+            self.A_tiles.sort(key=lambda tile: tile[0])
+            self.B_tiles.sort(key=lambda tile: tile[0])
+            self.tile_set = list(self.tile_set)
 
         self.transform = get_transform(opt)
 
@@ -96,8 +113,11 @@ class AlignedTilesDataset(BaseDataset):
         A_tile, A_path = self.A_tiles[index]
         B_tile, B_path = self.B_tiles[index]
         tmpA = Image.open(A_path)
-        A = Image.new('RGB', tmpA.size, (255, 255, 255))
-        A.paste(tmpA, mask=tmpA.split()[3])
+        if tmpA.mode == 'RGBA':
+            A = Image.new('RGB', tmpA.size, (255, 255, 255))
+            A.paste(tmpA, mask=tmpA.split()[3])
+        else:
+            A = tmpA
         A = self.transform(A)    # needs to be a tensor
         B = self.transform(Image.open(B_path).convert('RGB'))    # needs to be a tensor
         A_path = '_'.join(A_path.split('/')[-3:])
@@ -107,4 +127,3 @@ class AlignedTilesDataset(BaseDataset):
     def __len__(self):
         """Return the total number of images."""
         return len(self.tile_set)
-        # return len(self.A_tiles)
