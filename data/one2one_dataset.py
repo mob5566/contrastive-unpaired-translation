@@ -31,6 +31,7 @@ class One2oneDataset(BaseDataset):
         Returns:
             the modified parser.
         """
+        parser.add_argument('--align_data', action='store_true', help='load data with alignment')
         return parser
 
     def __init__(self, opt):
@@ -72,7 +73,9 @@ class One2oneDataset(BaseDataset):
         """
         src_setid, src_idx = self.image_idx[index]
         tgt_setid = src_setid ^ 1
-        tgt_idx = randint(0, len(self.image_paths[tgt_setid]) - 1)
+        tgt_idx = (randint(0, len(self.image_paths[tgt_setid]) - 1)
+                   if not self.opt.align_data
+                   else src_idx)
         path_A = self.image_paths[src_setid][src_idx]
         path_B = self.image_paths[tgt_setid][tgt_idx]
         img_A = Image.open(path_A).convert('RGB')
