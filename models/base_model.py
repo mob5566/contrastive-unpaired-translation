@@ -42,6 +42,7 @@ class BaseModel(ABC):
         self.optimizers = []
         self.image_paths = []
         self.metric = 0  # used for learning rate policy 'plateau'
+        self.lr = float('nan')
 
     @staticmethod
     def dict_grad_hook_factory(add_func=lambda x: x):
@@ -142,8 +143,7 @@ class BaseModel(ABC):
             else:
                 scheduler.step()
 
-        lr = self.optimizers[0].param_groups[0]['lr']
-        print('learning rate = %.7f' % lr)
+        self.lr = self.optimizers[0].param_groups[0]['lr']
 
     def get_current_visuals(self):
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
