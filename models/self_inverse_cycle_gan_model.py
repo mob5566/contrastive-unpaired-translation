@@ -47,7 +47,10 @@ class SelfInverseCycleGANModel(BaseModel):
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B']
         self.visual_names = ['real_A', 'fake_B', 'rec_A',
                              'real_B', 'fake_A', 'rec_B']
-        self.model_names = ['G']
+        if self.isTrain:
+            self.model_names = ['G', 'D_A', 'D_B']
+        else:  # during test time, only load Gs
+            self.model_names = ['G']
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.normG,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, opt.no_antialias, opt.no_antialias_up, self.gpu_ids, opt=opt)
 
