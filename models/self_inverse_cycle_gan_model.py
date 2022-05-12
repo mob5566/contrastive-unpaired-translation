@@ -82,7 +82,6 @@ class SelfInverseCycleGANModel(BaseModel):
         """
         self.real_A = input['A'].to(self.device)  # get image data A
         self.real_B = input['B'].to(self.device)  # get image data B
-        self.direction = input['direction']
         self.image_paths = input['A_paths']  # get image paths
 
     def forward(self):

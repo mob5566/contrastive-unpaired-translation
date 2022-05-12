@@ -48,12 +48,22 @@ class One2oneDataset(BaseDataset):
         # save the option and dataset root
         BaseDataset.__init__(self, opt)
         # get the image paths of your dataset;
-        self.image_paths = [sorted(make_dataset(Path(self.root) / 'A',
-                                                opt.max_dataset_size)),
-                            sorted(make_dataset(Path(self.root) / 'B',
-                                                opt.max_dataset_size))]
-        self.image_idx = [(setid, idx) for setid in range(len(self.image_paths))
-                          for idx in range(len(self.image_paths[setid]))]
+        self.image_paths_A = sorted(make_dataset(Path(self.root) / 'A'))
+        self.image_paths_B = sorted(make_dataset(Path(self.root) / 'B'))
+
+        if self.opt.direction == 'AtoB':
+            self.src_image_paths = self.image_paths_A
+            self.tgt_image_paths = self.image_paths_B
+        else:
+            self.src_image_paths = self.image_paths_B
+            self.tgt_image_paths = self.image_paths_A
+
+        self.src_size = min(len(self.src_image_paths),
+                            self.opt.max_dataset_size)
+        self.tgt_size = len(self.tgt_image_paths)
+        self.dataset_size = (self.src_size
+                             if not self.opt.align_data
+                             else min(self.src_size, self.tgt_size))
         # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
         self.transform = get_transform(opt)
 
@@ -71,22 +81,18 @@ class One2oneDataset(BaseDataset):
         Step 3: convert your data to a PyTorch tensor. You can use helpder functions such as self.transform. e.g., data = self.transform(image)
         Step 4: return a data point as a dictionary.
         """
-        src_setid, src_idx = self.image_idx[index]
-        tgt_setid = src_setid ^ 1
-        tgt_idx = (randint(0, len(self.image_paths[tgt_setid]) - 1)
-                   if not self.opt.align_data
-                   else src_idx)
-        path_A = self.image_paths[src_setid][src_idx]
-        path_B = self.image_paths[tgt_setid][tgt_idx]
+        tgt_index = (randint(0, self.tgt_size - 1)
+                     if not self.opt.align_data
+                     else index)
+        path_A = self.src_image_paths[index]
+        path_B = self.tgt_image_paths[tgt_index]
         img_A = Image.open(path_A).convert('RGB')
         img_B = Image.open(path_B).convert('RGB')
         data_A = self.transform(img_A)
         data_B = self.transform(img_B)
-        dirt = src_setid
         return {'A': data_A, 'B': data_B,
-                'A_paths': path_A, 'B_paths': path_B,
-                'direction': dirt}
+                'A_paths': path_A, 'B_paths': path_B}
 
     def __len__(self):
         """Return the total number of images."""
-        return len(self.image_idx)
+        return self.dataset_size
