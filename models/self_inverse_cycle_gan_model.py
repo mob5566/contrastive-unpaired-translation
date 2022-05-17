@@ -86,10 +86,10 @@ class SelfInverseCycleGANModel(BaseModel):
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        self.fake_B = self.netG_A(self.real_A)  # G(A)
-        self.rec_A = self.netG_B(self.fake_B)   # G(G(A))
-        self.fake_A = self.netG_B(self.real_B)  # G(B)
-        self.rec_B = self.netG_A(self.fake_A)   # G(G(B))
+        self.fake_B = self.netG(self.real_A)  # G(A)
+        self.rec_A = self.netG(self.fake_B)   # G(G(A))
+        self.fake_A = self.netG(self.real_B)  # G(B)
+        self.rec_B = self.netG(self.fake_A)   # G(G(B))
 
     def forward_A(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
