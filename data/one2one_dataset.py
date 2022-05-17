@@ -48,8 +48,10 @@ class One2oneDataset(BaseDataset):
         # save the option and dataset root
         BaseDataset.__init__(self, opt)
         # get the image paths of your dataset;
-        self.image_paths_A = sorted(make_dataset(Path(self.root) / 'A'))
-        self.image_paths_B = sorted(make_dataset(Path(self.root) / 'B'))
+        self.image_paths_A = sorted(make_dataset(Path(self.root) /
+                                                 (opt.phase + 'A')))
+        self.image_paths_B = sorted(make_dataset(Path(self.root) /
+                                                 (opt.phase + 'B')))
 
         if self.opt.direction == 'AtoB':
             self.src_image_paths = self.image_paths_A
