@@ -102,6 +102,8 @@ class BaseModel(ABC):
         self.print_networks(opt.verbose)
 
     def parallelize(self):
+        if len(self.gpu_ids) < 1:
+            return
         for name in self.model_names:
             if isinstance(name, str):
                 net = getattr(self, 'net' + name)
