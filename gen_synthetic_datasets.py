@@ -38,6 +38,7 @@ def main(args):
   phases = args.phases
   gpu_ids = args.gpu_ids
   num_test = args.num_test
+  workers = args.workers
 
   def to_para(args):
     expr, epoch, phase = args
@@ -54,7 +55,8 @@ def main(args):
       'gpu_ids': gpu_ids,
     }
 
-  p_map(gen_output, list(map(to_para, product(experiments, epochs, phases))))
+  p_map(gen_output, list(map(to_para, product(experiments, epochs, phases))),
+        num_cpus=workers)
 
 def get_parser():
   parser = argparse.ArgumentParser()
@@ -64,6 +66,7 @@ def get_parser():
   parser.add_argument('--phases', required=True, type=str, nargs='+',
                       choices=('train', 'test'))
   parser.add_argument('--num_test', type=int, default=10)
+  parser.add_argument('--workers', type=int, default=1)
   parser.add_argument('--gpu_ids', type=str, default='-1')
   parser.add_argument('--dataroot', required=True, type=Path)
   parser.add_argument('--dataset_mode', required=True, type=str)
