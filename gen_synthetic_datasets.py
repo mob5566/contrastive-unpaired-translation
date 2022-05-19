@@ -37,7 +37,7 @@ def main(args):
   epochs = args.epochs
   phases = args.phases
   gpu_ids = -1
-  num_test = 10
+  num_test = args.num_test
 
   def to_para(args):
     expr, epoch, phase = args
@@ -63,6 +63,7 @@ def get_parser():
   parser.add_argument('--epochs', required=True, type=int, nargs='+')
   parser.add_argument('--phases', required=True, type=str, nargs='+',
                       choices=('train', 'test'))
+  parser.add_argument('--num_test', type=int, default=10)
   parser.add_argument('--dataroot', required=True, type=Path)
   parser.add_argument('--dataset_mode', required=True, type=str)
   parser.add_argument('--output-dir', required=True, type=Path)
